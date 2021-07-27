@@ -37,8 +37,4 @@ class Solution {
     public long solution(int n, int[] times) {
         return new Search(n, times).binarySearch();
     }
-
-    public static void main(String[] args) {
-        System.out.println(new Solution().solution(6, new int[]{4, 10}));
-    }
 }

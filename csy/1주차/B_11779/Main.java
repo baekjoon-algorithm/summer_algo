@@ -12,7 +12,7 @@ public class Main {
     int n;
     private int[] costs;
     private int[] prev;
-    Map<Integer, List<Edge>> cityBusMap;
+    Map<Integer, List<Edge>> graph;
 
     Main(int n, String[] cities) {
         this.n = n;
@@ -20,13 +20,10 @@ public class Main {
     }
 
     private void createGraph(int n, String[] cities) {
-        costs = new int[n + 1];
-        Arrays.fill(costs,-1);
-        prev = new int[n + 1];
-        cityBusMap = new HashMap<>();
+        graph = new HashMap<>();
 
         for (int i = 1; i <= n; i++) {
-            cityBusMap.put(i, new ArrayList<>());
+            graph.put(i, new ArrayList<>());
         }
 
         for (String city : cities) {
@@ -34,11 +31,15 @@ public class Main {
             int from = Integer.parseInt(tokens[0]);
             int to = Integer.parseInt(tokens[1]);
             int cost = Integer.parseInt(tokens[2]);
-            cityBusMap.get(from).add(new Edge(to, cost));
+            graph.get(from).add(new Edge(to, cost));
         }
     }
 
     public String[] getShortestPath(int start, int end) {
+        costs = new int[n + 1];
+        Arrays.fill(costs,-1);
+        prev = new int[n + 1];
+
         dijkstra(start);
         int node = end;
         List<Integer> paths = new ArrayList<>();
@@ -63,39 +64,46 @@ public class Main {
         while (!queue.isEmpty()) {
             Edge edge = queue.poll();
             int node = edge.to;
-
             if (visited[node] == 1) {
                 continue;
             }
             visited[node] = 1;
-
-            for (Edge b : cityBusMap.get(node)) {
+            costs[node] = edge.cost;
+            prev[node] = edge.prev;
+            for (Edge b : graph.get(node)) {
                 int to = b.to;
                 int addCost = costs[node] + b.cost;
-                if (costs[to] == -1 || addCost < costs[to]) {
-                    costs[to] = addCost;
-                    prev[to] = node;
-                    queue.add(new Edge(to, addCost));
-                }
-                if (addCost == costs[to]) {
-                    prev[to] = Math.min(prev[to], node);
+                if (costs[to] == -1 || addCost <= costs[to]) {
+                    queue.add(new Edge(to, addCost, node));
                 }
             }
         }
     }
 
     class Edge implements Comparable<Edge>{
-        private int to;
-        private int cost;
+        private final int to;
+        private final int cost;
+        private final int prev;
 
         public Edge(int to, int weight) {
             this.to = to;
             this.cost = weight;
+            this.prev = 0;
+        }
+
+        public Edge(int to, int weight, int prev) {
+            this.to = to;
+            this.cost = weight;
+            this.prev = prev;
         }
 
         @Override
         public int compareTo(Edge o) {
-            return Integer.compare(this.cost, o.cost);
+            int compared = Integer.compare(this.cost, o.cost);
+            if (compared == 0) {
+                return Integer.compare(this.to, o.to);
+            }
+            return compared;
         }
     }
 
