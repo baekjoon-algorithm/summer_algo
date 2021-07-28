@@ -9,6 +9,7 @@ for _ in range(tc):
     s, g, h = map(int, input().split())
     adj = [[] for _ in range(n+1)]
 
+
     particular = [g, h]
     for _ in range(m):
         a, b, d = map(int,input().split())
