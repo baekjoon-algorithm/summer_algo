@@ -1,39 +1,42 @@
 import sys
 input = sys.stdin.readline
-import heapq
+from collections import deque
+
 
 n = int(input())
 m = int(input())
 
 adj = [[] for _ in range(n+1)]
-dist = [1] * (n+1)
+ind = [0] * (n+1)
+dist = [0] * (n+1)
 prev = [0] * (n+1)
-dist[1] = 0
-prev[1] = 1
+
+
 for _ in range(m):
     a, b, c = map(int, input().split())
-    adj[a].append((b, -c))
+    ind[b] += 1
+    adj[a].append((b, c))
 
-heap = []
-heapq.heappush(heap, (0, 1))
-
-while heap:
-    now_dis, now = heapq.heappop(heap)
-    if now_dis > dist[now]:
-        continue
+q = deque()
+q.append(1)
+ind[1] = 0
+while q:
+    now = q.popleft()
     for ed, cost in adj[now]:
-        if dist[ed] == 1 or dist[ed] > dist[now] + cost:
+        if cost + dist[now] > dist[ed]:
             dist[ed] = dist[now] + cost
             prev[ed] = now
-            if ed != 1:
-                heapq.heappush(heap, (dist[ed], ed))
+        ind[ed] -= 1
+        if ind[ed] == 0:
+            q.append(ed)
+print(dist[1])
 
-print(-dist[1])
-i = 1
 ret = [1]
-while prev[i] != 1:
+i = 1
+while True:
     i = prev[i]
     ret.append(i)
-ret.append(1)
+    if i == 1:
+        break
 ret.reverse()
 print(' '.join(map(str, ret)))
