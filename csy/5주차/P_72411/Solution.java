@@ -1,71 +1,81 @@
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /** 프로그래머스 ID 72411, 메뉴 리뉴얼 */
-class Solution {
-    public List<String> getCombination(String order) {
-        return combinationHelper(Stream.of(order.split(""))
-                        .sorted().collect(Collectors.toList()), new ArrayList<>());
+public class Solution {
+    public List<String> getCombination(String[] items, int maxCnt,
+                                       BiFunction<String, String, String> mergeFunction) {
+        return getCombination(items, maxCnt, mergeFunction, 0, 0);
     }
 
-    public List<String> combinationHelper(List<String> menus, List<String> combinations) {
-        if (menus.size() == 0) {
-            return combinations;
+    public List<String> getCombination(String[] items, int maxCnt,
+                                       BiFunction<String, String, String> mergeFunction, int idx, int cnt) {
+        // base case
+        if (idx >= items.length) {
+            return null;
         }
-        List<String> nCombinations = new ArrayList<>();
-        String menu = menus.remove(0);
-        combinations.forEach(comb -> {
-            String newComb = comb + menu;
-            nCombinations.add(newComb);
-        });
-        combinations.addAll(nCombinations);
-        combinations.add(menu);
-        return combinationHelper(menus, combinations);
+        if (cnt == maxCnt - 1) {
+            return new ArrayList<>(Arrays.asList(items).subList(idx, items.length));
+        }
+        List<String> result = new ArrayList<>();
+        for (int i = idx; i < items.length; i++) {
+            String order = items[i];
+            List<String> combinations = getCombination(items, maxCnt, mergeFunction, i + 1, cnt + 1);
+            if (combinations == null) {
+                continue;
+            }
+            for (String combination : combinations) {
+                String combined = mergeFunction.apply(combination, order);
+                if (!combined.isEmpty() && !result.contains(combined)) {
+                    result.add(combined);
+                }
+            }
+        }
+        return result;
+    }
+
+    String intersectMergeFunction(String a, String b) {
+        return Arrays.stream(a.split(""))
+                .filter(b::contains)
+                .sorted()
+                .collect(Collectors.joining());
+    }
+
+    String appendMergeFunction(String a, String b) {
+        return a.charAt(a.length() - 1) < b.charAt(b.length() - 1) ? a + b : b + a;
     }
 
     public String[] solution(String[] orders, int[] course) {
-        Map<String, Integer> countMap = new HashMap<>();
-        for (String order: orders) {
-            List<String> combinations = getCombination(order);
-            combinations.forEach(comb -> {
-                int courseMenuSize = comb.length();
-                boolean matched = false;
-                for (int c: course) {
-                    if (c == courseMenuSize) {
-                        matched = true;
-                        break;
+        Map<Integer, List<String>> maxCourseMap = new HashMap<>();
+        for (int i = 2; i < orders.length; i++) {
+            List<String> combinations = getCombination(orders, i, this::intersectMergeFunction);
+            Map<Integer, List<String>> courseMap = new HashMap<>();
+            for (String combination : combinations) {
+                for (int j = 0; j < course.length; j++) {
+                    if (course[j] <= combination.length()) {
+                        courseMap.putIfAbsent(j, new ArrayList<>());
+                        courseMap.get(j).addAll(getCombination(combination.split(""),
+                                course[j], this::appendMergeFunction));
                     }
                 }
-                if (matched) {
-                    countMap.put(comb, countMap.getOrDefault(comb, 0) + 1);
-                }
-            });
-        }
-
-        Map<Integer, Integer> maxMap = new HashMap<>();
-        countMap.forEach((key1, value) -> {
-            int key = key1.length();
-            maxMap.put(key, Math.max(maxMap.getOrDefault(key, 2), value));
-        });
-
-        List<String> resultList = new ArrayList<>();
-        countMap.forEach((key1, value) -> {
-            int key = key1.length();
-            if (maxMap.get(key).intValue() == value.intValue()) {
-                resultList.add(key1);
             }
-        });
-        Collections.sort(resultList);
-        return resultList.toArray(String[]::new);
+            maxCourseMap.putAll(courseMap);
+        }
+        return maxCourseMap.values()
+                .stream()
+                .flatMap(Collection::stream)
+                .sorted()
+                .toArray(String[]::new);
     }
 
     public static void main(String[] args) {
-        String[] answer = new Solution().solution(new String[]{"ABCFG", "AC", "CDE", "ACDE", "BCFG", "ACDEH"},
+        String[] answer = new Solution().solution(new String[]{"ABCD", "ABCD", "ABCD"},
                 new int[]{2, 3, 4});
         System.out.println(String.join("\n", answer));
     }
