@@ -16,11 +16,6 @@ def solution(n, number):
         if number in dp[i]:
             return i
     return -1
-
-
-
-
-
     # nn 꼴들이 처리가 안됨 => bfs 불가
     # while q:
     #     now = q.popleft()

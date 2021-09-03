@@ -18,6 +18,7 @@ def solution(user_id, banned_id):
             if flag:
                 adj[j].append(i)
 
+
     def recursive(idx, m, ret):
         if idx == m:
             answer.add(ret)
